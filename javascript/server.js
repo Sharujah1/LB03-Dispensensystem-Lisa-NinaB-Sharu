@@ -1,4 +1,3 @@
-//chatgpt
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
@@ -35,8 +34,7 @@ app.listen(port, () => {
 
 /***************** Änderungen ab hier lol *******************/
 
-
-// Endpoint to fetch data from the database
+// Fetch all rows from the dispensation table for a specific person
 app.get('/dispensen/user/:id', (req, res) => {
     const person_id = req.params.id
 
@@ -53,20 +51,39 @@ app.get('/dispensen/user/:id', (req, res) => {
 });
 
 
-// moodle
+// von Schulunterlagen
 
-// Method to get data from the user table
-app.get('/user', (req, res) => {
-    const query = 'SELECT * FROM users'; // SQL query to select all rows from user table
-    db.query(query, (err, results) => {
+// Method to get data from the user table --> aber ich will alle Daten von einer Person anzeigen?
+app.get('/user/:id', (req, res) => {
+    const person_id = req.params.id;
+    const query = 'SELECT * FROM users WHERE person_id = ?'; // SQL query to select all rows from user table
+
+    db.query(query, [person_id], (err, results) => {
         if (err) {
-            console.error('Error retrieving users:', err);
-            res.status(500).send('Server error');
+            console.error(`[ERROR] Failed to retrieve user with ID ${person_id}: ${err.message}`);
+            res.status(500).json({
+                success: false,
+                message: 'Server error. Please try again later.'
+            });
             return;
         }
-        res.json(results); // Send the results as JSON
+
+        if (results.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: `User with ID ${person_id} not found`
+            });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            data: results[0] // Es wird nur ein Benutzer zurückgegeben
+        });
     });
 });
+
+// Retrieve a single user by person_id
 
 app.get('/user/:id', (req, res) => {
     const userId = req.params.id;
@@ -86,51 +103,81 @@ app.get('/user/:id', (req, res) => {
     });
 });
 
-app.delete('/user/:id', (req, res) => {
-    const userId = req.params.id;
-    const deleteQuery = 'DELETE FROM users WHERE user_id = ?';
-    db.query(deleteQuery, [userId], (err, result) => {
-        if (err) {
-            res.status(500).send('Error deleting user');
-        } else if (result.affectedRows === 0) {
-            res.status(404).send('User not found');
-        } else {
-            res.send(`User with ID ${userId} deleted successfully`);
-        }
-    });
-});
+// User can update their information
 
 app.put('/user/:id', (req, res) => {
     const userId = req.params.id;
-    const { username, email } = req.query; // Get username and email from query parameters
-    // Ensure that at least one field is provided
-    if (!username && !email) {
-        return res.status(400).send('At least one field (username or email) must be provided for update.');
+    const { phone_number, password, last_name, first_name } = req.body; // Hole die Felder aus dem Request Body
+
+    // Überprüfen, ob mindestens ein Feld übergeben wurde
+    if (!phone_number && !password && !last_name && !first_name) {
+        return res.status(400).send('At least one field (phone_number, password, last_name, or first_name) must be provided for update.');
     }
-    // Construct the update query
-    const updateQuery = 'UPDATE users SET username = ?, email = ? WHERE user_id = ?';
-    const values = [username || null, email || null, userId]; // Use null for any field not provided
+
+    // Dynamisches Erstellen der Update-Query
+    const updates = [];
+    const values = [];
+
+    if (phone_number) {
+        updates.push('phone_number = ?');
+        values.push(phone_number);
+    }
+    if (password) {
+        updates.push('password = ?');
+        values.push(password);
+    }
+    if (last_name) {
+        updates.push('last_name = ?');
+        values.push(last_name);
+    }
+    if (first_name) {
+        updates.push('first_name = ?');
+        values.push(first_name);
+    }
+
+    // Füge die User-ID als letztes hinzu
+    values.push(person_id);
+
+    const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE person_id = ?`;
+
+    // Führe die Query aus
     db.query(updateQuery, values, (err, result) => {
         if (err) {
+            console.error(err);
             res.status(500).send('Error updating user');
         } else if (result.affectedRows === 0) {
             res.status(404).send('User not found');
         } else {
-            res.send(`User with ID ${userId} updated successfully`);
+            res.send(`User with ID ${person_id} updated successfully`);
         }
     });
 });
 
-// insert a row
+
+// insert a row, ich will folgendes auch noch: person_id, first_name, last_name, birth_date, phone_number, email_address, password
 app.post('/user', (req, res) => {
-    const { username, email } = req.query; // Get username and email from query parameters
+    const { person_id,
+        first_name,
+        last_name,
+        birth_date,
+        phone_number,
+        email_address,
+        password } = req.query; // Get username and email from query parameters
     // Ensure that both fields are provided
-    if (!username || !email) {
-        return res.status(400).send('Username and email are required for insertion.');
+    if (!person_id || !first_name || !last_name || !birth_date || !phone_number || !email_address || !password) {
+        return res.status(400).send('All fields are required.');
     }
     // Construct the insert query
-    const insertQuery = 'INSERT INTO users (username, email) VALUES (?, ?)';
-    const values = [username, email]; // Use provided fields for insertion
+    const insertQuery = 'INSERT INTO users (person_id, first_name, last_name, birth_date, phone_number, email_address, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const values = [
+        person_id,
+        first_name,
+        last_name,
+        birth_date,
+        phone_number,
+        email_address,
+        password
+    ]; // Use provided fields for insertion
     db.query(insertQuery, values, (err, result) => {
         if (err) {
             console.error('Error inserting user:', err);
