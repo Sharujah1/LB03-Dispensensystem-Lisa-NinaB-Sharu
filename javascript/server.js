@@ -30,14 +30,11 @@ app.listen(port, () => {
 });
 
 
-
-
 /***************** Änderungen ab hier lol *******************/
 
 // Fetch all rows from the dispensation table for a specific person
 app.get('/dispensen/user/:id', (req, res) => {
     const person_id = req.params.id
-
     const query = 'SELECT * FROM dispensation where person_id = ?';
 
     db.query(query, (err, results) => {
@@ -53,7 +50,7 @@ app.get('/dispensen/user/:id', (req, res) => {
 
 // von Schulunterlagen
 
-// Method to get data from the user table --> aber ich will alle Daten von einer Person anzeigen?
+// Get data from one person
 app.get('/user/:id', (req, res) => {
     const person_id = req.params.id;
     const query = 'SELECT * FROM users WHERE person_id = ?'; // SQL query to select all rows from user table
@@ -107,7 +104,7 @@ app.get('/user/:id', (req, res) => {
 
 app.put('/user/:id', (req, res) => {
     const userId = req.params.id;
-    const { phone_number, password, last_name, first_name } = req.body; // Hole die Felder aus dem Request Body
+    const {phone_number, password, last_name, first_name} = req.body; // Hole die Felder aus dem Request Body
 
     // Überprüfen, ob mindestens ein Feld übergeben wurde
     if (!phone_number && !password && !last_name && !first_name) {
@@ -138,7 +135,9 @@ app.put('/user/:id', (req, res) => {
     // Füge die person_id als letztes hinzu
     values.push(person_id);
 
-    const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE person_id = ?`;
+    const updateQuery = `UPDATE users
+                         SET ${updates.join(', ')}
+                         WHERE person_id = ?`;
 
     // Führe die Query aus
     db.query(updateQuery, values, (err, result) => {
@@ -156,28 +155,14 @@ app.put('/user/:id', (req, res) => {
 
 // add new user
 app.post('/user', (req, res) => {
-    const { person_id,
-        first_name,
-        last_name,
-        birth_date,
-        phone_number,
-        email_address,
-        password } = req.query; // Get username and email from query parameters
+    const {person_id, first_name, last_name, birth_date, phone_number, email_address, password} = req.query; // Get username and email from query parameters
     // Ensure that both fields are provided
     if (!person_id || !first_name || !last_name || !birth_date || !phone_number || !email_address || !password) {
         return res.status(400).send('All fields are required.');
     }
     // Construct the insert query
     const insertQuery = 'INSERT INTO users (person_id, first_name, last_name, birth_date, phone_number, email_address, password) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    const values = [
-        person_id,
-        first_name,
-        last_name,
-        birth_date,
-        phone_number,
-        email_address,
-        password
-    ]; // Use provided fields for insertion
+    const values = [person_id, first_name, last_name, birth_date, phone_number, email_address, password]; // Use provided fields for insertion
     db.query(insertQuery, values, (err, result) => {
         if (err) {
             console.error('Error inserting user:', err);
