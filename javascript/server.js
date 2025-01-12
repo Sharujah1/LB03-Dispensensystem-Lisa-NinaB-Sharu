@@ -135,7 +135,7 @@ app.put('/user/:id', (req, res) => {
         values.push(first_name);
     }
 
-    // Füge die User-ID als letztes hinzu
+    // Füge die person_id als letztes hinzu
     values.push(person_id);
 
     const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE person_id = ?`;
@@ -154,7 +154,7 @@ app.put('/user/:id', (req, res) => {
 });
 
 
-// insert a row, ich will folgendes auch noch: person_id, first_name, last_name, birth_date, phone_number, email_address, password
+// add new user
 app.post('/user', (req, res) => {
     const { person_id,
         first_name,
