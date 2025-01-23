@@ -74,10 +74,14 @@ app.get('/dispensen/user/:id', (req, res) => {
 
     const query = 'SELECT * FROM dispensation where person_id = ?';
 
+<<<<<<< HEAD
 
 
     db.query(query, [person_id], (err, results) => {
 
+=======
+    db.query(query, [person_id], (err, results) => {
+>>>>>>> e3b2f972ed41005f89707d686e5240d65d37569a
         if (err) {
 
             console.error('Error fetching data:', err);
