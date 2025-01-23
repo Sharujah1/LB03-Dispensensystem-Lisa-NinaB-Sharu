@@ -37,7 +37,7 @@ app.get('/dispensen/user/:id', (req, res) => {
     const person_id = req.params.id
     const query = 'SELECT * FROM dispensation where person_id = ?';
 
-    db.query(query, (err, results) => {
+    db.query(query, [person_id], (err, results) => {
         if (err) {
             console.error('Error fetching data:', err);
             res.status(500).send('Error fetching data from the database.');
